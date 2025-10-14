@@ -8,7 +8,7 @@ FIB_DIR = "fib_files"  # <── folder where all fib files live
 # --- Language setup ---
 LANGUAGES = {
     "Python": {
-        "cmd": ["python", f"{FIB_DIR}/fib.py"]
+        "cmd": ["python", "-u",  f"{FIB_DIR}/fib.py"]
     },
     "C++": {
         "prepare": [["g++", f"{FIB_DIR}/fib.cpp", "-o", f"{FIB_DIR}/fib_bin"]],
@@ -84,6 +84,9 @@ def run_language(name, cfg):
 # --- Streamlit UI ---
 st.title("Multi-Language Fibonacci Game")
 
+# --- Streamlit UI ---
+st.title("Multi-Language Fibonacci Game")
+
 # User chooses how many Fibonacci numbers to calculate
 n = st.number_input(
     "Enter n (how many Fibonacci numbers to calculate):",
@@ -95,74 +98,13 @@ n = st.number_input(
 st.session_state["n_value"] = n
 st.write(f"Each language will calculate the first {n} Fibonacci numbers.")
 
-# --- Run buttons section ---
-st.header("Run Benchmarks")
-
-col_all, _ = st.columns([1, 3])
-
-with col_all:
-    if st.button("▶️ Run All Benchmarks"):
-        st.info("Running all languages — this may take up to a minute...")
-        results = []
-        for lang, cfg in LANGUAGES.items():
-            res = run_language(lang, cfg)
-            results.append(res)
-            st.success(f"{lang} finished in {res['seconds']} seconds")
-
-        # Save all results
-        with open("results.json", "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=2)
-
-        st.balloons()
-        st.info("✅ All benchmarks complete!")
-
-# --- Run each language separately ---
 st.divider()
 st.subheader("Run a specific language")
 
 for lang, cfg in LANGUAGES.items():
-    if st.button(f"▶️ Run {lang} only"):
-        st.info(f"Running only {lang} — please wait...")
+    if st.button(f"▶️ Run {lang}"):
+        st.info(f"Running {lang} — please wait...")
         res = run_language(lang, cfg)
-
-        # Save single result
-        if os.path.exists("results.json"):
-            with open("results.json", encoding="utf-8") as f:
-                results = json.load(f)
-        else:
-            results = []
-
-        # Update or append
-        found = False
-        for i, r in enumerate(results):
-            if r["language"] == lang:
-                results[i] = res
-                found = True
-        if not found:
-            results.append(res)
-
-        with open("results.json", "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=2)
-
         st.success(f"{lang} finished in {res['seconds']} seconds!")
 
-
-# --- Results viewer ---
-st.divider()
-st.header("Previous Results")
-
-if os.path.exists("results.json"):
-    with open("results.json", encoding="utf-8") as f:
-        results = json.load(f)
-
-    for r in results:
-        st.subheader(f"{r['language']} — {r['seconds']} seconds")
-        with st.expander(f"Show Fibonacci sequence for {r['language']}"):
-            seq = r.get("sequence", [])
-            if seq:
-                st.text(", ".join(map(str, seq)))
-            else:
-                st.warning("No sequence found in result file.")
-else:
-    st.warning("No previous results yet — click 'Run All Benchmarks' to start.")
 
