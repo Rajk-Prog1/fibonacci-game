@@ -127,10 +127,16 @@ def run_language(name, cfg):
 
         leaderboard = compute_leaderboard(df, actual)
         if not leaderboard.empty:
-            st.subheader("🏆 Updated Leaderboard")
-            st.dataframe(leaderboard, use_container_width=True)
+            leaderboard = leaderboard.reset_index(drop=True)
+            leaderboard.insert(0, "Rank", leaderboard.index + 1)
+            leaderboard_placeholder.dataframe(
+                leaderboard,
+                use_container_width=True,
+                hide_index=True
+            )
         else:
-            st.info("No guesses or results available yet.")
+            leaderboard_placeholder.info("No guesses or results available yet.")
+
     except Exception as e:
         st.error(f"Error updating leaderboard: {e}")
 
@@ -236,40 +242,50 @@ actual = {}
 
 # --- Leaderboard display with single table ---
 st.subheader("🏆 Leaderboard")
-
 refresh_clicked = st.button("🔄 Refresh leaderboard")
+leaderboard_placeholder = st.empty()
+
+
 
 if refresh_clicked:
     st.info("Refreshing data from Google Sheet...")
     df = load_guesses()
     leaderboard = compute_leaderboard(df, actual)
     st.success("Leaderboard refreshed!")
-
 else:
-    # Initial load (only once)
     df = load_guesses()
     leaderboard = compute_leaderboard(df, actual)
 
-# --- Show leaderboard (even if it's empty) ---
+# --- Prepare leaderboard display (always show something) ---
 if not leaderboard.empty:
-    st.dataframe(leaderboard, use_container_width=True)
+    # Add rank column as first column (1, 2, 3, …)
+    leaderboard = leaderboard.reset_index(drop=True)
+    leaderboard.insert(0, "Rank", leaderboard.index + 1)
+
+    leaderboard_placeholder.dataframe(
+        leaderboard,
+        use_container_width=True,
+        hide_index=True
+    )
 else:
-    # Show only names and guesses with empty score columns (if available)
+    # Show names and guesses only (blank scores)
     if not df.empty:
         for col in ["Python_score", "C++_score", "Java_score", "PHP_score", "Final_score"]:
             if col not in df.columns:
                 df[col] = None
-        ordered_cols = [
+        df = df[[
             "Name",
             "Python", "Python_score",
             "C++", "C++_score",
             "Java", "Java_score",
             "PHP", "PHP_score",
             "Final_score"
-        ]
-        st.dataframe(df[ordered_cols], use_container_width=True)
+        ]]
+        df = df.reset_index(drop=True)
+        df.insert(0, "Rank", df.index + 1)
+        leaderboard_placeholder.dataframe(df, use_container_width=True, hide_index=True)
     else:
-        st.warning("No data yet — waiting for form responses.")
+        leaderboard_placeholder.warning("No data yet — waiting for form responses.")
 
 
 st.divider()
