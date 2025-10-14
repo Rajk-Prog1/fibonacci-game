@@ -176,7 +176,16 @@ def load_guesses():
                 return None
 
         df["Date"] = df["Timestamp"].apply(to_date)
+        before_count = len(df)
         df = df[df["Date"] == today]
+        after_count = len(df)
+
+
+        if after_count == 0:
+            st.warning(f"No submissions from today ({today}). Showing 0 rows.")
+        else:
+            st.info(f"Filtered {before_count} total rows → {after_count} from today ({today}).")
+
 
         # Drop helper column
         df.drop(columns=["Date"], inplace=True)
