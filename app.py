@@ -12,15 +12,16 @@ LANGUAGES = {
         "cmd": ["python", os.path.join(FIB_DIR, "fib.py")]
     },
     "C++": {
-        "prepare": [["g++", os.path.join(FIB_DIR, "fib.cpp"), "-o", os.path.join(FIB_DIR, "fib_bin")]],
-        "cmd": [os.path.join(FIB_DIR, "fib_bin")],
-        "cleanup": [["rm", os.path.join(FIB_DIR, "fib_bin")]]
+        "prepare": [["g++", "fib.cpp", "-o", "fib_bin"]],
+        "cmd": ["./fib_bin"],
+        "cleanup": [["rm", "fib_bin"]],
+        "cwd": FIB_DIR  # 👈 compile and run inside fib_files
     },
     "Java": {
         "prepare": [["javac", "fib.java"]],
         "cmd": ["java", "-cp", ".", "fib"],
         "cleanup": [["rm", "fib.class"]],
-        "cwd": FIB_DIR  # compile and run inside fib_files/
+        "cwd": FIB_DIR  # 👈 compile and run inside fib_files
     },
     "PHP": {
         "cmd": ["php", os.path.join(FIB_DIR, "fib.php")]
@@ -47,6 +48,10 @@ def run_language(name, cfg):
     # Ensure C++ binary is executable
     if name == "C++":
         subprocess.call(["chmod", "+x", os.path.join(FIB_DIR, "fib_bin")])
+
+    if name == "C++":
+        subprocess.call(["chmod", "+x", "fib_bin"], cwd=cfg.get("cwd", None))
+
 
     # Run and stream output (respect cwd)
     start = time.time()
