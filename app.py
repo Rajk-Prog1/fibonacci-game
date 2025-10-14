@@ -12,16 +12,18 @@ LANGUAGES = {
         "cmd": ["python", f"{FIB_DIR}/fib.py"]
     },
     "C++": {
-        "prepare": [["g++", f"{FIB_DIR}/fib.cpp", "-o", f"{FIB_DIR}/fib_bin"]],
-        "cmd": [f"./{FIB_DIR}/fib_bin"],
-        "cleanup": [["rm", f"{FIB_DIR}/fib_bin"]]
-    },
+    "prepare": [["g++", os.path.join(FIB_DIR, "fib.cpp"), "-o", os.path.join(FIB_DIR, "fib_bin")]],
+    "cmd": [os.path.join(FIB_DIR, "fib_bin")],
+    "cleanup": [["rm", os.path.join(FIB_DIR, "fib_bin")]]
+},
+
     "Java": {
         "prepare": [["javac", "fib.java"]],
         "cmd": ["java", "fib"],
         "cleanup": [["rm", "fib.class"]],
-        "cwd": FIB_DIR
+        "cwd": FIB_DIR  # 👈 run inside fib_files
     },
+
     "PHP": {
         "cmd": ["php", f"{FIB_DIR}/fib.php"]
     }
