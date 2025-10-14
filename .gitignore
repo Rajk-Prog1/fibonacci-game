@@ -31,3 +31,7 @@ Thumbs.db
 
 # Secrets
 secrets.toml
+
+.streamlit/secrets.toml
+credentials.json
+
