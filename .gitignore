@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Compiled C++ / Java binaries
+build/
+*.out
+*.o
+*.class
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# macOS / Windows / Linux junk
+.DS_Store
+Thumbs.db
+
+# Python artifacts
+*.log
+*.json
+
+# Streamlit
+.streamlit/
+
+# VSCode / JetBrains IDE
+.vscode/
+.idea/
+
+# Secrets
+secrets.toml
