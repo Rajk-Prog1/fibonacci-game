@@ -32,8 +32,6 @@ result <- list(
   seconds = elapsed
 )
 
-if (!requireNamespace("jsonlite", quietly = TRUE)) {
-  install.packages("jsonlite", repos = "https://cloud.r-project.org")
-}
 jsonlite::write_json(result, "result_r.json", pretty = TRUE, auto_unbox = TRUE)
+
 

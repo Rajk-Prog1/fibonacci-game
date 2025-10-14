@@ -19,7 +19,7 @@ LANGUAGES = {
         "prepare": [["javac", "fib.java"]],
         "cmd": ["java", "fib"],
         "cleanup": [["rm", "fib.class"]],
-        "cwd": "fib_files"
+        "cwd": FIB_DIR
     },
     "R": {
         "cmd": ["Rscript", f"{FIB_DIR}/fib.R"]
@@ -44,7 +44,7 @@ def run_language(name, cfg):
         stderr=subprocess.STDOUT,
         text=True,
         cwd=cfg.get("cwd", None),
-        env={**os.environ, "FIB_N": str(st.session_state["n_value"])}
+        env={**os.environ, "FIB_N": str(st.session_state.get("n_value", n))}
     )
     lines = []
     for line in process.stdout:
