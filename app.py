@@ -9,25 +9,24 @@ FIB_DIR = "fib_files"
 # --- Language setup ---
 LANGUAGES = {
     "Python": {
-        "cmd": ["python", f"{FIB_DIR}/fib.py"]
+        "cmd": ["python", os.path.join(FIB_DIR, "fib.py")]
     },
     "C++": {
-    "prepare": [["g++", os.path.join(FIB_DIR, "fib.cpp"), "-o", os.path.join(FIB_DIR, "fib_bin")]],
-    "cmd": [os.path.join(FIB_DIR, "fib_bin")],
-    "cleanup": [["rm", os.path.join(FIB_DIR, "fib_bin")]]
-},
-
+        "prepare": [["g++", os.path.join(FIB_DIR, "fib.cpp"), "-o", os.path.join(FIB_DIR, "fib_bin")]],
+        "cmd": [os.path.join(FIB_DIR, "fib_bin")],
+        "cleanup": [["rm", os.path.join(FIB_DIR, "fib_bin")]]
+    },
     "Java": {
         "prepare": [["javac", "fib.java"]],
-        "cmd": ["java", "fib"],
+        "cmd": ["java", "-cp", ".", "fib"],
         "cleanup": [["rm", "fib.class"]],
-        "cwd": FIB_DIR  # 👈 run inside fib_files
+        "cwd": FIB_DIR  # compile and run inside fib_files/
     },
-
     "PHP": {
-        "cmd": ["php", f"{FIB_DIR}/fib.php"]
+        "cmd": ["php", os.path.join(FIB_DIR, "fib.php")]
     }
 }
+
 
 def run_language(name, cfg):
     """Compile (if needed), run, and capture output/time for one language"""
@@ -45,7 +44,11 @@ def run_language(name, cfg):
         for prep in cfg["prepare"]:
             subprocess.call(prep, cwd=cfg.get("cwd", None))
 
-    # Run and stream output (again respect cwd)
+    # Ensure C++ binary is executable
+    if name == "C++":
+        subprocess.call(["chmod", "+x", os.path.join(FIB_DIR, "fib_bin")])
+
+    # Run and stream output (respect cwd)
     start = time.time()
     process = subprocess.Popen(
         cfg["cmd"],
