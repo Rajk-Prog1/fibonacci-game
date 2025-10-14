@@ -2,15 +2,6 @@ import streamlit as st
 import subprocess, time, json, os
 import shutil
 
-# --- Ensure R runtime exists (manual install) ---
-if not os.path.exists("/usr/bin/Rscript"):
-    st.warning("Installing minimal R environment...")
-    subprocess.call(
-        "apt-get update && apt-get install -y r-base-core r-cran-jsonlite || true",
-        shell=True
-    )
-
-
 st.set_page_config(page_title="Fibonacci Benchmark", layout="wide")
 
 FIB_DIR = "fib_files"
@@ -31,9 +22,9 @@ LANGUAGES = {
         "cleanup": [["rm", "fib.class"]],
         "cwd": FIB_DIR
     },
-    "R": {
-        "cmd": ["Rscript", f"{FIB_DIR}/fib.R"]
-    }
+#    "R": {
+#        "cmd": ["Rscript", f"{FIB_DIR}/fib.R"]
+#    }
 }
 
 def run_language(name, cfg):
