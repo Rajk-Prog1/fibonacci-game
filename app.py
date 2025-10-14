@@ -212,6 +212,9 @@ def compute_leaderboard(df, actual):
 # --- Streamlit UI ---
 st.title("Multi-Language Fibonacci Game")
 
+actual = {}
+
+
 # --- Leaderboard display with single table ---
 refresh_clicked = st.button("🔄 Refresh leaderboard")
 
