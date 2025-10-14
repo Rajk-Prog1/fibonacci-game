@@ -16,9 +16,10 @@ LANGUAGES = {
         "cleanup": [["rm", f"{FIB_DIR}/fib_bin"]]
     },
     "Java": {
-        "prepare": [["javac", f"{FIB_DIR}/fib.java"]],
-        "cmd": ["java", "-cp", f"./FIB_DIR/", "fib"],
-        "cleanup": [["rm", f"{FIB_DIR}/fib.class"]]
+        "prepare": [["javac", "fib.java"]],
+        "cmd": ["java", "-cp", ".", "fib"],
+        "cleanup": [["rm", "fib.class"]],
+        "cwd": FIB_DIR
     },
     "PHP": {
         "cmd": ["php", os.path.join(FIB_DIR, "fib.php")]
@@ -31,14 +32,23 @@ def run_language(name, cfg):
     st.subheader(f"▶️ Running {name}")
     output_box = st.empty()
 
+    n_val = int(st.session_state.get("n_value", 40))  # <-- user's n value
+
     # Compile if necessary
     if "prepare" in cfg:
         for prep in cfg["prepare"]:
-            subprocess.call(prep)
+            subprocess.call(prep, cwd=cfg.get("cwd", None))
 
     # Run and stream output
     start = time.time()
-    process = subprocess.Popen(cfg["cmd"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    process = subprocess.Popen(
+        cfg["cmd"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        cwd=cfg.get("cwd", None),
+        env={**os.environ, "FIB_N": str(n_val)}  # pass n via environment
+    )
     lines = []
     for line in process.stdout:
         lines.append(line.strip())
@@ -49,10 +59,10 @@ def run_language(name, cfg):
     # Cleanup
     if "cleanup" in cfg:
         for clean in cfg["cleanup"]:
-            subprocess.call(clean)
+            subprocess.call(clean, cwd=cfg.get("cwd", None))
 
     # Determine expected JSON filename
-    result_file = f"{FIB_DIR}/result_{name.lower().replace('+','p')}.json"
+    result_file = os.path.join(cfg.get("cwd", ""), f"result_{name.lower().replace('+','p')}.json")
 
     # Read existing JSON (created by the fib script) or create a fallback
     if os.path.exists(result_file):
@@ -61,13 +71,14 @@ def run_language(name, cfg):
     else:
         result = {
             "language": name,
-            "n": 40,
+            "n": n_val,
             "sequence": [],
             "seconds": elapsed
         }
 
     result["seconds"] = round(elapsed, 3)
     return result
+
 
 
 # --- Streamlit UI ---
