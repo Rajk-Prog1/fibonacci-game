@@ -137,6 +137,27 @@ def run_language(name, cfg):
         else:
             leaderboard_placeholder.info("No guesses or results available yet.")
 
+        # --- Show actual measured runtimes (if results exist) ---
+        if os.path.exists("results.json"):
+            with open("results.json", "r", encoding="utf-8") as f:
+                actual_data = json.load(f)
+
+            # Create a small summary DataFrame
+            actual_df = pd.DataFrame(
+                [
+                    {"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)}
+                    for row in actual_data
+                ]
+            ).sort_values("Runtime (seconds)", ascending=True)
+
+            st.caption("💡 Actual measured runtimes")
+            st.dataframe(
+                actual_df,
+                use_container_width=False,
+                hide_index=True
+            )
+
+
     except Exception as e:
         st.error(f"Error updating leaderboard: {e}")
 
@@ -267,6 +288,28 @@ if not leaderboard.empty:
         use_container_width=True,
         hide_index=True
     )
+
+    # --- Show actual measured runtimes (if results exist) ---
+    if os.path.exists("results.json"):
+        with open("results.json", "r", encoding="utf-8") as f:
+            actual_data = json.load(f)
+
+        # Create a small summary DataFrame
+        actual_df = pd.DataFrame(
+            [
+                {"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)}
+                for row in actual_data
+            ]
+        ).sort_values("Runtime (seconds)", ascending=True)
+
+        st.caption("💡 Actual measured runtimes")
+        st.dataframe(
+            actual_df,
+            use_container_width=False,
+            hide_index=True
+        )
+
+
 else:
     # Show names and guesses only (blank scores)
     if not df.empty:
