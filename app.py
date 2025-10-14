@@ -17,7 +17,7 @@ LANGUAGES = {
     },
     "Java": {
         "prepare": [["javac", f"{FIB_DIR}/fib.java"]],
-        "cmd": ["java", "-cp", FIB_DIR, "fib"],
+        "cmd": ["java", "-cp", f"./FIB_DIR/", "fib"],
         "cleanup": [["rm", f"{FIB_DIR}/fib.class"]]
     },
     "PHP": {
