@@ -235,6 +235,8 @@ actual = {}
 
 
 # --- Leaderboard display with single table ---
+st.subheader("🏆 Leaderboard")
+
 refresh_clicked = st.button("🔄 Refresh leaderboard")
 
 if refresh_clicked:
@@ -247,6 +249,28 @@ else:
     # Initial load (only once)
     df = load_guesses()
     leaderboard = compute_leaderboard(df, actual)
+
+# --- Show leaderboard (even if it's empty) ---
+if not leaderboard.empty:
+    st.dataframe(leaderboard, use_container_width=True)
+else:
+    # Show only names and guesses with empty score columns (if available)
+    if not df.empty:
+        for col in ["Python_score", "C++_score", "Java_score", "PHP_score", "Final_score"]:
+            if col not in df.columns:
+                df[col] = None
+        ordered_cols = [
+            "Name",
+            "Python", "Python_score",
+            "C++", "C++_score",
+            "Java", "Java_score",
+            "PHP", "PHP_score",
+            "Final_score"
+        ]
+        st.dataframe(df[ordered_cols], use_container_width=True)
+    else:
+        st.warning("No data yet — waiting for form responses.")
+
 
 st.divider()
 
