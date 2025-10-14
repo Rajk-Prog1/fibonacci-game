@@ -1,5 +1,6 @@
 import streamlit as st
 import subprocess, time, json, os
+import shutil
 
 st.set_page_config(page_title="Fibonacci Benchmark", layout="wide")
 
@@ -30,6 +31,12 @@ def run_language(name, cfg):
     """Compile (if needed), run, and capture output/time for one language"""
     st.subheader(f"Running {name}")
     output_box = st.empty()
+
+    # Check for compiler/interpreter existence
+    main_bin = cfg["cmd"][0]
+    if shutil.which(main_bin) is None:
+        st.error(f"{main_bin} not found — skipping {name}")
+        return {"language": name, "sequence": [], "seconds": 0, "n": st.session_state.get("n_value", 40)}
 
     # Compile if necessary (use cwd if provided)
     if "prepare" in cfg:
