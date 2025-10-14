@@ -2,3 +2,5 @@ default-jdk
 g++
 r-base
 r-cran-jsonlite
+unixodbc
+unixodbc-dev
