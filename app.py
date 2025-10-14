@@ -22,9 +22,9 @@ LANGUAGES = {
         "cleanup": [["rm", "fib.class"]],
         "cwd": FIB_DIR
     },
-#    "R": {
-#        "cmd": ["Rscript", f"{FIB_DIR}/fib.R"]
-#    }
+    "PHP": {
+        "cmd": ["php", f"{FIB_DIR}/fib.php"]
+    }
 }
 
 def run_language(name, cfg):
@@ -51,7 +51,7 @@ def run_language(name, cfg):
         stderr=subprocess.STDOUT,
         text=True,
         cwd=cfg.get("cwd", None),
-        env={**os.environ, "FIB_N": str(st.session_state.get("n_value", n))}
+        env={**os.environ, "FIB_N": str(st.session_state.get("n_value", 40))}
     )
     lines = []
     for line in process.stdout:
@@ -60,11 +60,12 @@ def run_language(name, cfg):
     process.wait()
     elapsed = time.time() - start
 
+    # Cleanup if needed
     if "cleanup" in cfg:
         for clean in cfg["cleanup"]:
             subprocess.call(clean, cwd=cfg.get("cwd", None))
 
-
+    # Load results from JSON file
     result_file = os.path.join(cfg.get("cwd", ""), f"result_{name.lower().replace('+','p')}.json")
     if os.path.exists(result_file):
         with open(result_file, encoding="utf-8") as f:
@@ -85,7 +86,13 @@ def run_language(name, cfg):
 st.title("Multi-Language Fibonacci Game")
 
 # User chooses how many Fibonacci numbers to calculate
-n = st.number_input("Enter n (how many Fibonacci numbers to calculate):", min_value=1, max_value=100, value=40, step=1)
+n = st.number_input(
+    "Enter n (how many Fibonacci numbers to calculate):",
+    min_value=1,
+    max_value=100,
+    value=40,
+    step=1
+)
 st.session_state["n_value"] = n
 st.write(f"Each language will calculate the first {n} Fibonacci numbers.")
 
