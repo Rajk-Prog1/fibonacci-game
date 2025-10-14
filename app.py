@@ -95,21 +95,57 @@ n = st.number_input(
 st.session_state["n_value"] = n
 st.write(f"Each language will calculate the first {n} Fibonacci numbers.")
 
-if st.button("Run All Benchmarks"):
-    st.info("Running all language benchmarks — may take up to a minute...")
-    results = []
+# --- Run buttons section ---
+st.header("Run Benchmarks")
 
-    for lang, cfg in LANGUAGES.items():
+col_all, _ = st.columns([1, 3])
+
+with col_all:
+    if st.button("▶️ Run All Benchmarks"):
+        st.info("Running all languages — this may take up to a minute...")
+        results = []
+        for lang, cfg in LANGUAGES.items():
+            res = run_language(lang, cfg)
+            results.append(res)
+            st.success(f"{lang} finished in {res['seconds']} seconds")
+
+        # Save all results
+        with open("results.json", "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2)
+
+        st.balloons()
+        st.info("✅ All benchmarks complete!")
+
+# --- Run each language separately ---
+st.divider()
+st.subheader("Run a specific language")
+
+for lang, cfg in LANGUAGES.items():
+    if st.button(f"▶️ Run {lang} only"):
+        st.info(f"Running only {lang} — please wait...")
         res = run_language(lang, cfg)
-        results.append(res)
-        st.success(f"{lang} finished in {res['seconds']} seconds")
 
-    # Save all results
-    with open("results.json", "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2)
+        # Save single result
+        if os.path.exists("results.json"):
+            with open("results.json", encoding="utf-8") as f:
+                results = json.load(f)
+        else:
+            results = []
 
-    st.balloons()
-    st.info("All benchmarks complete! Results saved to results.json")
+        # Update or append
+        found = False
+        for i, r in enumerate(results):
+            if r["language"] == lang:
+                results[i] = res
+                found = True
+        if not found:
+            results.append(res)
+
+        with open("results.json", "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2)
+
+        st.success(f"{lang} finished in {res['seconds']} seconds!")
+
 
 # --- Results viewer ---
 st.divider()
