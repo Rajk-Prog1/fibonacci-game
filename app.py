@@ -4,6 +4,8 @@ import pandas as pd
 import math
 import gspread
 from google.oauth2.service_account import Credentials
+from datetime import datetime
+
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
@@ -157,11 +159,28 @@ def load_guesses():
         # Rename columns (your Hungarian Google Form headers)
         df.rename(columns={
             "Név": "Name",
+            "Időbélyeg": "Timestamp",
             "Python (másodpercben)": "Python",
             "C++ (másodpercben)": "C++",
             "Java (másodpercben)": "Java",
             "PHP (másodpercben)": "PHP",
         }, inplace=True)
+
+        today = datetime.now().date()
+
+        # Convert timestamps (some Google Sheets export timestamps as strings)
+        def to_date(val):
+            try:
+                return pd.to_datetime(val).date()
+            except Exception:
+                return None
+
+        df["Date"] = df["Timestamp"].apply(to_date)
+        df = df[df["Date"] == today]
+
+        # Drop helper column
+        df.drop(columns=["Date"], inplace=True)
+
         return df
     except Exception as e:
         st.error(f"Error loading Google Sheet: {e}")
@@ -193,33 +212,26 @@ def compute_leaderboard(df, actual):
 # --- Streamlit UI ---
 st.title("Multi-Language Fibonacci Game")
 
-# --- Leaderboard section ---
-st.title("🏆 Fibonacci Speed Challenge — Leaderboard")
+# --- Leaderboard display with single table ---
+refresh_clicked = st.button("🔄 Refresh leaderboard")
 
-# Load actual benchmark results (if available)
-try:
-    with open("results.json", "r", encoding="utf-8") as f:
-        actual_data = json.load(f)
-    actual = {row["language"]: row["seconds"] for row in actual_data}
-except FileNotFoundError:
-    st.warning("⚠️ Benchmark results (results.json) not found. Please run the measurements first.")
-    actual = {}
+if refresh_clicked:
+    st.info("Refreshing data from Google Sheet...")
+    df = load_guesses()
+    leaderboard = compute_leaderboard(df, actual)
+    st.success("Leaderboard refreshed!")
 
-# Load initial guesses when app starts
-df = load_guesses()
-leaderboard = compute_leaderboard(df, actual)
+else:
+    # Initial load (only once)
+    df = load_guesses()
+    leaderboard = compute_leaderboard(df, actual)
 
+# Display leaderboard (only once)
 if not leaderboard.empty:
     st.dataframe(leaderboard, use_container_width=True)
 else:
     st.warning("No data yet — waiting for form responses or benchmark results.")
 
-# Button for manual refresh
-if st.button("🔄 Refresh leaderboard"):
-    df = load_guesses()
-    leaderboard = compute_leaderboard(df, actual)
-    st.success("Leaderboard refreshed!")
-    st.dataframe(leaderboard, use_container_width=True)
 
 st.divider()
 
