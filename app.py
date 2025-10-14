@@ -84,8 +84,6 @@ def run_language(name, cfg):
 # --- Streamlit UI ---
 st.title("Multi-Language Fibonacci Game")
 
-# --- Streamlit UI ---
-st.title("Multi-Language Fibonacci Game")
 
 # User chooses how many Fibonacci numbers to calculate
 n = st.number_input(
