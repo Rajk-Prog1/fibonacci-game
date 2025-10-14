@@ -176,15 +176,7 @@ def load_guesses():
                 return None
 
         df["Date"] = df["Timestamp"].apply(to_date)
-        before_count = len(df)
         df = df[df["Date"] == today]
-        after_count = len(df)
-
-
-        if after_count == 0:
-            st.warning(f"No submissions from today ({today}). Showing 0 rows.")
-        else:
-            st.info(f"Filtered {before_count} total rows → {after_count} from today ({today}).")
 
 
         # Drop helper column
@@ -199,9 +191,26 @@ def load_guesses():
 # --- Helper: Compute leaderboard ---
 def compute_leaderboard(df, actual):
     """Compute scores and return a sorted leaderboard DataFrame."""
-    if df.empty or not actual:
+
+    # If no guesses yet, return empty
+    if df.empty:
         return pd.DataFrame()
 
+    # If no benchmark results yet, return table with empty score columns
+    if not actual:
+        for col in ["Python_score", "C++_score", "Java_score", "PHP_score", "Final_score"]:
+            df[col] = None
+        ordered_cols = [
+            "Name",
+            "Python", "Python_score",
+            "C++", "C++_score",
+            "Java", "Java_score",
+            "PHP", "PHP_score",
+            "Final_score"
+        ]
+        return df[ordered_cols]
+
+    # --- If we have actual benchmark times, compute scores normally ---
     for lang in ["Python", "C++", "Java", "PHP"]:
         df[f"{lang}_score"] = df[lang].apply(lambda g: forgiving_score(g, actual.get(lang, 0)))
 
@@ -217,6 +226,7 @@ def compute_leaderboard(df, actual):
         "Final_score"
     ]
     return df[ordered_cols]
+
 
 # --- Streamlit UI ---
 st.title("Multi-Language Fibonacci Game")
@@ -237,13 +247,6 @@ else:
     # Initial load (only once)
     df = load_guesses()
     leaderboard = compute_leaderboard(df, actual)
-
-# Display leaderboard (only once)
-if not leaderboard.empty:
-    st.dataframe(leaderboard, use_container_width=True)
-else:
-    st.warning("No data yet — waiting for form responses or benchmark results.")
-
 
 st.divider()
 
