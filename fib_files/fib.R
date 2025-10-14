@@ -1,3 +1,11 @@
+# Read n from environment variable or default to 40
+n_env <- Sys.getenv("FIB_N")
+if (n_env != "") {
+  n <- as.integer(n_env)
+} else {
+  n <- 40
+}
+
 fib <- function(n) {
   if (n < 2) {
     return(1)
@@ -6,7 +14,6 @@ fib <- function(n) {
   }
 }
 
-n <- 40
 sequence <- c()
 start_time <- Sys.time()
 
@@ -29,3 +36,4 @@ if (!requireNamespace("jsonlite", quietly = TRUE)) {
   install.packages("jsonlite", repos = "https://cloud.r-project.org")
 }
 jsonlite::write_json(result, "result_r.json", pretty = TRUE, auto_unbox = TRUE)
+

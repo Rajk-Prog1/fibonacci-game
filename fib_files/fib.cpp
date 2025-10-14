@@ -2,6 +2,7 @@
 #include <fstream>
 #include <chrono>
 #include <vector>
+#include <cstdlib>   // for getenv, atoi
 using namespace std;
 
 int fib(int n) {
@@ -11,7 +12,10 @@ int fib(int n) {
 }
 
 int main() {
-    int n = 40;
+    // Read n from environment variable or use default 40
+    const char* env_n = getenv("FIB_N");
+    int n = env_n ? atoi(env_n) : 40;
+
     vector<long long> sequence;
     auto start = chrono::high_resolution_clock::now();
 

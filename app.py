@@ -16,9 +16,10 @@ LANGUAGES = {
         "cleanup": [["rm", f"{FIB_DIR}/fib_bin"]]
     },
     "Java": {
-        "prepare": [["javac", f"{FIB_DIR}/fib.java"]],
-        "cmd": ["java", "-cp", FIB_DIR, "fib"],
-        "cleanup": [["rm", f"{FIB_DIR}/fib.class"]]
+        "prepare": [["javac", "fib.java"]],
+        "cmd": ["java", "fib"],
+        "cleanup": [["rm", "fib.class"]],
+        "cwd": "fib_files"
     },
     "R": {
         "cmd": ["Rscript", f"{FIB_DIR}/fib.R"]
@@ -30,12 +31,21 @@ def run_language(name, cfg):
     st.subheader(f"Running {name}")
     output_box = st.empty()
 
+    # Compile if necessary (use cwd if provided)
     if "prepare" in cfg:
         for prep in cfg["prepare"]:
-            subprocess.call(prep)
+            subprocess.call(prep, cwd=cfg.get("cwd", None))
 
+    # Run and stream output (again respect cwd)
     start = time.time()
-    process = subprocess.Popen(cfg["cmd"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    process = subprocess.Popen(
+        cfg["cmd"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        cwd=cfg.get("cwd", None),
+        env={**os.environ, "FIB_N": str(st.session_state["n_value"])}
+    )
     lines = []
     for line in process.stdout:
         lines.append(line.strip())
@@ -45,17 +55,17 @@ def run_language(name, cfg):
 
     if "cleanup" in cfg:
         for clean in cfg["cleanup"]:
-            subprocess.call(clean)
+            subprocess.call(clean, cwd=cfg.get("cwd", None))
 
-    result_file = f"{FIB_DIR}/result_{name.lower().replace('+','p')}.json"
 
+    result_file = os.path.join(cfg.get("cwd", ""), f"result_{name.lower().replace('+','p')}.json")
     if os.path.exists(result_file):
         with open(result_file, encoding="utf-8") as f:
             result = json.load(f)
     else:
         result = {
             "language": name,
-            "n": 40,
+            "n": int(st.session_state.get("n_value", 40)),
             "sequence": [],
             "seconds": elapsed
         }
@@ -66,6 +76,11 @@ def run_language(name, cfg):
 
 # --- Streamlit UI ---
 st.title("Multi-Language Fibonacci Game")
+
+# User chooses how many Fibonacci numbers to calculate
+n = st.number_input("Enter n (how many Fibonacci numbers to calculate):", min_value=1, max_value=100, value=40, step=1)
+st.session_state["n_value"] = n
+st.write(f"Each language will calculate the first {n} Fibonacci numbers.")
 
 if st.button("Run All Benchmarks"):
     st.info("Running all language benchmarks — may take up to a minute...")

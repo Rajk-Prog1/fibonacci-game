@@ -10,7 +10,15 @@ class fib {
     }
 
     public static void main(String[] args) throws Exception {
+        // Read n from environment variable or default to 40
         int n = 40;
+        String envN = System.getenv("FIB_N");
+        if (envN != null && !envN.isEmpty()) {
+            try {
+                n = Integer.parseInt(envN);
+            } catch (NumberFormatException ignored) {}
+        }
+
         List<Long> sequence = new ArrayList<>();
         long start = System.nanoTime();
 

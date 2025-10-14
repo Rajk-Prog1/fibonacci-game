@@ -1,4 +1,4 @@
-import json, time
+import os, json, time
 
 def fib(n):
     if n < 2:
@@ -6,7 +6,8 @@ def fib(n):
     return fib(n - 1) + fib(n - 2)
 
 if __name__ == "__main__":
-    n = 40
+    n = int(os.getenv("FIB_N", "40"))
+
     start = time.time()
     sequence = []
     for i in range(1, n + 1):
@@ -24,3 +25,4 @@ if __name__ == "__main__":
 
     with open("result_python.json", "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
+
