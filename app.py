@@ -95,14 +95,14 @@ def run_language(name, cfg):
     # --- Update time and save ---
     result["seconds"] = round(elapsed, 3)
 
-    # Load previous results.json
+    # --- Load previous results.json ---
     if os.path.exists("results.json"):
         with open("results.json", "r", encoding="utf-8") as f:
             all_results = json.load(f)
     else:
         all_results = []
 
-    # Update or add current language
+    # --- Update or add current language ---
     updated = False
     for r in all_results:
         if r["language"] == name:
@@ -112,7 +112,7 @@ def run_language(name, cfg):
     if not updated:
         all_results.append(result)
 
-    # Save updated results.json
+    # --- Save updated results.json ---
     with open("results.json", "w", encoding="utf-8") as f:
         json.dump(all_results, f, indent=2)
 
@@ -137,31 +137,30 @@ def run_language(name, cfg):
         else:
             leaderboard_placeholder.info("No guesses or results available yet.")
 
-        # --- Show actual measured runtimes (if results exist) ---
-        if os.path.exists("results.json"):
-            with open("results.json", "r", encoding="utf-8") as f:
-                actual_data = json.load(f)
+        # --- Update runtime summary table (top placeholder, not new block) ---
+        if actual_data:
+            actual_df = (
+                pd.DataFrame(
+                    [
+                        {"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)}
+                        for row in actual_data
+                    ]
+                )
+                .sort_values("Runtime (seconds)", ascending=True)
+                .reset_index(drop=True)
+            )
 
-            # Create a small summary DataFrame
-            actual_df = pd.DataFrame(
-                [
-                    {"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)}
-                    for row in actual_data
-                ]
-            ).sort_values("Runtime (seconds)", ascending=True)
-
-            st.caption("💡 Actual measured runtimes")
-            st.dataframe(
+            runtime_placeholder.dataframe(
                 actual_df,
                 use_container_width=False,
                 hide_index=True
             )
 
-
     except Exception as e:
         st.error(f"Error updating leaderboard: {e}")
 
     return result
+
 
 
 # --- Forgiving logarithmic scoring function ---
@@ -265,70 +264,77 @@ actual = {}
 st.subheader("🏆 Leaderboard")
 refresh_clicked = st.button("🔄 Refresh leaderboard")
 leaderboard_placeholder = st.empty()
+runtime_placeholder = st.empty()
 
-
+df = load_guesses()
+leaderboard = compute_leaderboard(df, actual)
 
 if refresh_clicked:
     st.info("Refreshing data from Google Sheet...")
-    df = load_guesses()
-    leaderboard = compute_leaderboard(df, actual)
-    st.success("Leaderboard refreshed!")
-else:
-    df = load_guesses()
-    leaderboard = compute_leaderboard(df, actual)
 
-# --- Prepare leaderboard display (always show something) ---
+    # Reset runtimes when leaderboard is manually refreshed
+    empty_runtime_df = pd.DataFrame(
+        [
+            {"Language": lang, "Runtime (seconds)": 0.0}
+            for lang in ["Python", "C++", "Java", "PHP"]
+        ]
+    )
+    runtime_placeholder.dataframe(
+        empty_runtime_df, use_container_width=False, hide_index=True
+    )
+
+    st.success("Leaderboard refreshed!")
+
+# --- Show leaderboard ---
 if not leaderboard.empty:
-    # Add rank column as first column (1, 2, 3, …)
     leaderboard = leaderboard.reset_index(drop=True)
     leaderboard.insert(0, "Rank", leaderboard.index + 1)
-
     leaderboard_placeholder.dataframe(
         leaderboard,
         use_container_width=True,
         hide_index=True
     )
-
-    # --- Show actual measured runtimes (if results exist) ---
-    if os.path.exists("results.json"):
-        with open("results.json", "r", encoding="utf-8") as f:
-            actual_data = json.load(f)
-
-        # Create a small summary DataFrame
-        actual_df = pd.DataFrame(
-            [
-                {"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)}
-                for row in actual_data
-            ]
-        ).sort_values("Runtime (seconds)", ascending=True)
-
-        st.caption("💡 Actual measured runtimes")
-        st.dataframe(
-            actual_df,
-            use_container_width=False,
-            hide_index=True
-        )
-
-
 else:
-    # Show names and guesses only (blank scores)
+    # Show guesses but empty scores
     if not df.empty:
         for col in ["Python_score", "C++_score", "Java_score", "PHP_score", "Final_score"]:
             if col not in df.columns:
                 df[col] = None
-        df = df[[
-            "Name",
-            "Python", "Python_score",
-            "C++", "C++_score",
-            "Java", "Java_score",
-            "PHP", "PHP_score",
-            "Final_score"
-        ]]
-        df = df.reset_index(drop=True)
+        df = df[
+            [
+                "Name",
+                "Python", "Python_score",
+                "C++", "C++_score",
+                "Java", "Java_score",
+                "PHP", "PHP_score",
+                "Final_score",
+            ]
+        ].reset_index(drop=True)
         df.insert(0, "Rank", df.index + 1)
         leaderboard_placeholder.dataframe(df, use_container_width=True, hide_index=True)
     else:
         leaderboard_placeholder.warning("No data yet — waiting for form responses.")
+
+# --- Show measured runtimes (if results.json exists) ---
+if os.path.exists("results.json"):
+    with open("results.json", "r", encoding="utf-8") as f:
+        actual_data = json.load(f)
+
+    actual_df = (
+        pd.DataFrame(
+            [{"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)} for row in actual_data]
+        )
+        .sort_values("Runtime (seconds)", ascending=True)
+        .reset_index(drop=True)
+    )
+    runtime_placeholder.dataframe(actual_df, use_container_width=False, hide_index=True)
+else:
+    # Empty runtime table on first load
+    empty_runtime_df = pd.DataFrame(
+        [{"Language": lang, "Runtime (seconds)": 0.0} for lang in ["Python", "C++", "Java", "PHP"]]
+    )
+    runtime_placeholder.dataframe(empty_runtime_df, use_container_width=False, hide_index=True)
+
 
 
 st.divider()
