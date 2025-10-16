@@ -28,24 +28,21 @@ FIB_DIR = "fib_files"  # <── folder where all fib files live
 
 # --- Language setup ---
 LANGUAGES = {
-    "Python": {
-        "cmd": ["python", "-u",  f"{FIB_DIR}/fib.py"]
-    },
+    "Python": {"cmd": ["python", "-u", f"{FIB_DIR}/fib.py"]},
     "C++": {
         "prepare": [["g++", f"{FIB_DIR}/fib.cpp", "-o", f"{FIB_DIR}/fib_bin"]],
         "cmd": [f"./{FIB_DIR}/fib_bin"],
-        "cleanup": [["rm", f"{FIB_DIR}/fib_bin"]]
+        "cleanup": [["rm", f"{FIB_DIR}/fib_bin"]],
     },
     "Java": {
         "prepare": [["javac", "fib.java"]],
         "cmd": ["java", "-cp", ".", "fib"],
         "cleanup": [["rm", "fib.class"]],
-        "cwd": FIB_DIR
+        "cwd": FIB_DIR,
     },
-    "PHP": {
-        "cmd": ["php", os.path.join(FIB_DIR, "fib.php")]
-    }
+    "PHP": {"cmd": ["php", os.path.join(FIB_DIR, "fib.php")]},
 }
+
 
 # --- Helper function to run each language ---
 def run_language(name, cfg):
@@ -68,7 +65,7 @@ def run_language(name, cfg):
         stderr=subprocess.STDOUT,
         text=True,
         cwd=cfg.get("cwd", None),
-        env={**os.environ, "FIB_N": str(n_val)}
+        env={**os.environ, "FIB_N": str(n_val)},
     )
     lines = []
     for line in process.stdout:
@@ -83,7 +80,9 @@ def run_language(name, cfg):
             subprocess.call(clean, cwd=cfg.get("cwd", None))
 
     # --- Prepare result file path ---
-    result_file = os.path.join(cfg.get("cwd", ""), f"result_{name.lower().replace('+','p')}.json")
+    result_file = os.path.join(
+        cfg.get("cwd", ""), f"result_{name.lower().replace('+','p')}.json"
+    )
 
     # --- Load or create result ---
     if os.path.exists(result_file):
@@ -130,9 +129,7 @@ def run_language(name, cfg):
             leaderboard = leaderboard.reset_index(drop=True)
             leaderboard.insert(0, "Rank", leaderboard.index + 1)
             leaderboard_placeholder.dataframe(
-                leaderboard,
-                use_container_width=True,
-                hide_index=True
+                leaderboard, use_container_width=True, hide_index=True
             )
         else:
             leaderboard_placeholder.info("No guesses or results available yet.")
@@ -142,7 +139,10 @@ def run_language(name, cfg):
             actual_df = (
                 pd.DataFrame(
                     [
-                        {"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)}
+                        {
+                            "Language": row["language"],
+                            "Runtime (seconds)": round(row["seconds"], 3),
+                        }
                         for row in actual_data
                     ]
                 )
@@ -151,9 +151,7 @@ def run_language(name, cfg):
             )
 
             runtime_placeholder.dataframe(
-                actual_df,
-                use_container_width=False,
-                hide_index=True
+                actual_df, use_container_width=False, hide_index=True
             )
 
     except Exception as e:
@@ -162,9 +160,8 @@ def run_language(name, cfg):
     return result
 
 
-
 # --- Forgiving logarithmic scoring function ---
-def forgiving_score(guess, actual, k=1.0, round_digits = 4):
+def forgiving_score(guess, actual, k=1.0, round_digits=4):
     """Calculate a forgiving logarithmic accuracy score (0–100%)."""
     try:
         guess = float(guess)
@@ -183,14 +180,17 @@ def load_guesses():
         sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
         df = pd.DataFrame(sheet.get_all_records())
         # Rename columns (your Hungarian Google Form headers)
-        df.rename(columns={
-            "Név": "Name",
-            "Időbélyeg": "Timestamp",
-            "Python (másodpercben)": "Python",
-            "C++ (másodpercben)": "C++",
-            "Java (másodpercben)": "Java",
-            "PHP (másodpercben)": "PHP",
-        }, inplace=True)
+        df.rename(
+            columns={
+                "Név": "Name",
+                "Időbélyeg": "Timestamp",
+                "Python (másodpercben)": "Python",
+                "C++ (másodpercben)": "C++",
+                "Java (másodpercben)": "Java",
+                "PHP (másodpercben)": "PHP",
+            },
+            inplace=True,
+        )
 
         today = datetime.now().date()
 
@@ -203,7 +203,6 @@ def load_guesses():
 
         df["Date"] = df["Timestamp"].apply(to_date)
         df = df[df["Date"] == today]
-
 
         # Drop helper column
         df.drop(columns=["Date"], inplace=True)
@@ -224,32 +223,50 @@ def compute_leaderboard(df, actual):
 
     # If no benchmark results yet, return table with empty score columns
     if not actual:
-        for col in ["Python_score", "C++_score", "Java_score", "PHP_score", "Final_score"]:
+        for col in [
+            "Python_score",
+            "C++_score",
+            "Java_score",
+            "PHP_score",
+            "Final_score",
+        ]:
             df[col] = None
         ordered_cols = [
             "Name",
-            "Python", "Python_score",
-            "C++", "C++_score",
-            "Java", "Java_score",
-            "PHP", "PHP_score",
-            "Final_score"
+            "Python",
+            "Python_score",
+            "C++",
+            "C++_score",
+            "Java",
+            "Java_score",
+            "PHP",
+            "PHP_score",
+            "Final_score",
         ]
         return df[ordered_cols]
 
     # --- If we have actual benchmark times, compute scores normally ---
     for lang in ["Python", "C++", "Java", "PHP"]:
-        df[f"{lang}_score"] = df[lang].apply(lambda g: forgiving_score(g, actual.get(lang, 0)))
+        df[f"{lang}_score"] = df[lang].apply(
+            lambda g: forgiving_score(g, actual.get(lang, 0))
+        )
 
-    df["Final_score"] = df[[f"{lang}_score" for lang in ["Python", "C++", "Java", "PHP"]]].mean(axis=1)
+    df["Final_score"] = df[
+        [f"{lang}_score" for lang in ["Python", "C++", "Java", "PHP"]]
+    ].mean(axis=1)
     df.sort_values("Final_score", ascending=False, inplace=True)
 
     ordered_cols = [
         "Name",
-        "Python", "Python_score",
-        "C++", "C++_score",
-        "Java", "Java_score",
-        "PHP", "PHP_score",
-        "Final_score"
+        "Python",
+        "Python_score",
+        "C++",
+        "C++_score",
+        "Java",
+        "Java_score",
+        "PHP",
+        "PHP_score",
+        "Final_score",
     ]
     return df[ordered_cols]
 
@@ -272,6 +289,11 @@ leaderboard = compute_leaderboard(df, actual)
 if refresh_clicked:
     st.info("Refreshing data from Google Sheet...")
 
+    # 🔄 Clear previous runtime data
+    if os.path.exists("results.json"):
+        os.remove("results.json")
+        st.warning("Previous runtime data cleared.")
+
     # Reset runtimes when leaderboard is manually refreshed
     empty_runtime_df = pd.DataFrame(
         [
@@ -285,28 +307,37 @@ if refresh_clicked:
 
     st.success("Leaderboard refreshed!")
 
+
 # --- Show leaderboard ---
 if not leaderboard.empty:
     leaderboard = leaderboard.reset_index(drop=True)
     leaderboard.insert(0, "Rank", leaderboard.index + 1)
     leaderboard_placeholder.dataframe(
-        leaderboard,
-        use_container_width=True,
-        hide_index=True
+        leaderboard, use_container_width=True, hide_index=True
     )
 else:
     # Show guesses but empty scores
     if not df.empty:
-        for col in ["Python_score", "C++_score", "Java_score", "PHP_score", "Final_score"]:
+        for col in [
+            "Python_score",
+            "C++_score",
+            "Java_score",
+            "PHP_score",
+            "Final_score",
+        ]:
             if col not in df.columns:
                 df[col] = None
         df = df[
             [
                 "Name",
-                "Python", "Python_score",
-                "C++", "C++_score",
-                "Java", "Java_score",
-                "PHP", "PHP_score",
+                "Python",
+                "Python_score",
+                "C++",
+                "C++_score",
+                "Java",
+                "Java_score",
+                "PHP",
+                "PHP_score",
                 "Final_score",
             ]
         ].reset_index(drop=True)
@@ -322,7 +353,13 @@ if os.path.exists("results.json"):
 
     actual_df = (
         pd.DataFrame(
-            [{"Language": row["language"], "Runtime (seconds)": round(row["seconds"], 3)} for row in actual_data]
+            [
+                {
+                    "Language": row["language"],
+                    "Runtime (seconds)": round(row["seconds"], 3),
+                }
+                for row in actual_data
+            ]
         )
         .sort_values("Runtime (seconds)", ascending=True)
         .reset_index(drop=True)
@@ -331,10 +368,14 @@ if os.path.exists("results.json"):
 else:
     # Empty runtime table on first load
     empty_runtime_df = pd.DataFrame(
-        [{"Language": lang, "Runtime (seconds)": 0.0} for lang in ["Python", "C++", "Java", "PHP"]]
+        [
+            {"Language": lang, "Runtime (seconds)": 0.0}
+            for lang in ["Python", "C++", "Java", "PHP"]
+        ]
     )
-    runtime_placeholder.dataframe(empty_runtime_df, use_container_width=False, hide_index=True)
-
+    runtime_placeholder.dataframe(
+        empty_runtime_df, use_container_width=False, hide_index=True
+    )
 
 
 st.divider()
@@ -346,7 +387,7 @@ n = st.number_input(
     min_value=1,
     max_value=100,
     value=40,
-    step=1
+    step=1,
 )
 st.session_state["n_value"] = n
 st.write(f"Each language will calculate the first {n} Fibonacci numbers.")
@@ -358,6 +399,3 @@ for lang, cfg in LANGUAGES.items():
     if st.button(f"▶️ Run {lang}"):
         st.info(f"Running {lang} — please wait...")
         res = run_language(lang, cfg)
-        st.success(f"{lang} finished in {res['seconds']} seconds!")
-
-
